@@ -38,7 +38,7 @@ app.get('/', (request, response) => {
 // Role 0: Student, Role 1: Alumni
 app.get('/user/:id/details', function(request, response){
     var id = request.params.id
-    var sql = "SELECT u.id, name, major, degree, graduationDate, role, bio, mobNumber, resume FROM USERS u LEFT OUTER JOIN ubhacking.resumes r ON u.id = r.uid WHERE u.id = " + id + ";"
+    var sql = "SELECT u.id, name, major, degree, graduationDate, role, bio, mobNumber, resume FROM USERS u LEFT OUTER JOIN ubhacking.resumes r ON u.id = r.uid WHERE u.id = " + id + " ORDER BY r.id DESC LIMIT 1;"
     connection.query(sql, function (error, result) {
         response.json(result);
     })
