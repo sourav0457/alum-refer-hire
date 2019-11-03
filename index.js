@@ -1,9 +1,11 @@
+const http = require('http');
 const express = require('express')
 const fileUpload = require('express-fileupload');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const _ = require('lodash');
+const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const app = express();
 const cors = require('cors');
 // const twilio = require('./send_sms')
@@ -80,8 +82,67 @@ app.get('/jobs/:studentId/fetchPostedJobs', function(request, response){
     var studentId = request.params.studentId
     var sql = "SELECT nameOfCompany, logo, position, datePosted, status FROM ubhacking.JobListings INNER JOIN ubhacking.users u ON postedBy = u.id WHERE u.id = " + studentId + ";"
     connection.query(sql, function (error, result) {
-        response.json(result);
+        response.send({
+            data: result
+        });
     })
+})
+
+// Handle an incoming Twilio message
+app.post('/sms', function(request, response){
+    const twiml = new MessagingResponse();
+
+    var pattern = /Push/;
+    var pattern2 = /List/;
+    var exists = pattern.test(request.body.Body);
+    var existslist = pattern2.test(request.body.Body);
+    var jobId = null
+    
+    console.log(request.body.From);
+
+    var sql = "SELECT id FROM users WHERE mobNumber = " + request.body.From + ";"
+    connection.query(sql, function (error, result) {
+        console.log(result[0].id);
+
+        if (existslist)
+        {
+            var sql = "SELECT jl.id, nameOfCompany, position, datePosted FROM ubhacking.JobListings jl WHERE jl.status <> 1 AND jl.postedBy <> " + result[0].id + ";"
+            connection.query(sql, function (error, result) {
+                console.log(result[0])
+                // twiml.message(result)  
+            })
+
+        } else if(exists){
+            console.log("Push Received");
+            var jobId = request.body.Body.split(" ")[1];
+            if (jobId != null) {
+                var status = '0'
+                var dt = dateTime.create()
+                var dateOfApplication = dt.format('Y-m-d H:M:S');
+                connection.query(
+                    "INSERT INTO ubhacking.JobsApplied (uid, jlid, status, dateOfApplication) VALUES ( '"+ result[0].id +"' ,'" + jobId + "','" + status +"' ,'" + dateOfApplication + "');", 
+                    (error, results) => {
+                        if(error) throw error;
+                })
+                twiml.message("Thanks for applying to this job " + jobId);
+            }
+            else {
+                twiml.message("Incorrect Format, Please Use: Push <JOBID>");
+            }
+        }
+        else {
+            twiml.message("Please Use: Push <JOBID> to apply for a job.")
+        }
+        response.writeHead(200, {'Content-Type': 'text/xml'});
+        response.end(twiml.toString());
+    })
+
+    // var sql = "SELECT jl.id, nameOfCompany, position, datePosted FROM ubhacking.JobListings jl WHERE jl.status <> 1 AND jl.postedBy <>;"
+    // connection.query(sql, function (error, result) {
+    //     response.send({
+    //         data: result
+    //     });
+    // })
 })
 
 // Create a user
@@ -129,7 +190,7 @@ app.post('/jobs/add', function(request, response){
     var datePosted = dt.format('Y-m-d H:M:S');
     // var uid = request.body.uid
     
-    var c1 = connection.query(
+    connection.query(
         "INSERT INTO ubhacking.JobListings (nameOfCompany, logo, position, postedBy, datePosted, status) VALUES ( '"+ nameOfCompany +"' ,'" + logo + "','" + position +"' ,'" + postedBy + "' ,'" + datePosted + "' ,'" + status + "');", 
         (error, results) => {
             if(error) throw error;
