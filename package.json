@@ -1,0 +1,27 @@
+{
+  "name": "alum-refer-hire",
+  "version": "1.0.0",
+  "description": "An application that allows University Alumnies to post jobs to which currently enrolled students can apply to",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sourav0457/alum-refer-hire.git"
+  },
+  "author": "sourav samanta",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sourav0457/alum-refer-hire/issues"
+  },
+  "homepage": "https://github.com/sourav0457/alum-refer-hire#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mysql": "^2.17.1",
+    "twilio": "^3.37.0"
+  }
+}
